@@ -1,17 +1,224 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Italian Year Trainer</title>
-<style>
-*{box-sizing:border-box}body{font-family:system-ui,Arial,sans-serif;background:#f3f4f6;color:#222;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:20px}.trainer{background:white;width:100%;max-width:460px;padding:25px;border-radius:18px;box-shadow:0 4px 25px #0001;text-align:center}h2{margin:0;font-size:25px}.subtitle{color:#777;font-size:14px;margin:8px 0 20px}.stats{display:flex;justify-content:space-between;font-size:13px;color:#666;border-bottom:1px solid #ddd;padding-bottom:12px}button{font:inherit;cursor:pointer;border:1px solid #ddd;border-radius:10px;background:white;color:#222;padding:12px 16px;font-weight:600}button:hover{filter:brightness(.95)}button:disabled{opacity:.5;cursor:default}.play{background:#17834c;color:white;border:0;width:100%;padding:18px;font-size:18px;margin:20px 0 15px}input[type=number]{width:100%;padding:15px;border:1px solid #ccc;border-radius:10px;font-size:32px;text-align:center;letter-spacing:5px;appearance:textfield;outline:none}input::-webkit-inner-spin-button,input::-webkit-outer-spin-button{-webkit-appearance:none}input[type=number]:focus{border-color:#17834c}.actions{display:flex;gap:8px;margin-top:10px}.actions button{flex:1}#check{background:#222;color:white}.speed{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;margin-top:20px}input[type=range]{width:120px;accent-color:#17834c}#feedback{min-height:46px;margin-top:12px;padding:12px;font-size:14px;font-weight:600;border-radius:8px}.correct{background:#dcfce7;color:#15803d}.wrong{background:#fee2e2;color:#b91c1c}input.correct{border-color:#16a34a;background:#dcfce7}input.wrong{border-color:#dc2626;background:#fee2e2}
-</style></head><body><main class="trainer"><h2>🇮🇹 Ascolta e scrivi</h2><div class="subtitle">Listen and identify the year · 1900–2026</div><div class="stats"><span id="round">Question 1</span><span id="score">Correct: 0 / 0</span></div><button class="play" id="play">▶ Listen to number</button><form id="answerForm"><input id="guess" type="number" placeholder="YYYY" inputmode="numeric" autocomplete="off" aria-label="Enter the year"><div class="actions"><button type="submit" id="check">Check answer</button><button type="button" id="next">Skip</button></div></form><div id="feedback" aria-live="polite">Press listen to begin.</div><div class="speed"><span>Speech speed</span><input id="speed" type="range" min="0.5" max="1.2" step="0.05" value="0.85" aria-label="Speech speed"><span id="speedLabel">0.85×</span></div></main>
-<script>
-const MIN_YEAR=1900, MAX_YEAR=2026;
-let year=randomYear(),round=1,correct=0,total=0,finished=false,missed=false;
-const el=id=>document.getElementById(id);
-function randomYear(){return MIN_YEAR+Math.floor(Math.random()*(MAX_YEAR-MIN_YEAR+1));}
-function say(){try{if(!('speechSynthesis' in window))throw new Error('Speech unavailable');window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(String(year));utterance.lang='it-IT';utterance.rate=Number(el('speed').value);utterance.pitch=1;utterance.volume=1;const voices=window.speechSynthesis.getVoices();const voice=voices.find(v=>v.lang.toLowerCase()==='it-it')||voices.find(v=>v.lang.toLowerCase().startsWith('it'));if(voice)utterance.voice=voice;utterance.onerror=e=>{if(['interrupted','canceled'].includes(e.error))return;el('feedback').className='';el('feedback').textContent='Audio unavailable. Check your browser’s Italian voice support.';};window.speechSynthesis.speak(utterance);}catch(e){el('feedback').className='';el('feedback').textContent='Speech playback is unavailable in this browser.';}}
-function updateScore(){el('score').textContent=`Correct: ${correct} / ${total}`;}
-function advance(){if(!finished){total++;updateScore();}const previous=year;do{year=randomYear();}while(year===previous&&MAX_YEAR>MIN_YEAR);round++;finished=false;missed=false;el('round').textContent='Question '+round;el('guess').value='';el('guess').className='';el('guess').disabled=false;el('check').disabled=false;el('next').textContent='Skip';el('feedback').className='';el('feedback').textContent='Listen and enter the year.';say();}
-el('play').onclick=say;
-el('answerForm').onsubmit=e=>{e.preventDefault();if(finished||!el('guess').value)return; if(Number(el('guess').value)===year){if(!missed)correct++;total++;finished=true;updateScore();el('feedback').className='correct';el('feedback').textContent='✓ Corretto! '+year;el('guess').className='correct';el('check').disabled=true;el('guess').disabled=true;el('next').textContent='Next number';}else{missed=true;el('feedback').className='wrong';el('feedback').textContent='✗ Riprova! — Try again.';el('guess').className='wrong';el('guess').focus();}};
-el('guess').oninput=()=>el('guess').className='';el('next').onclick=advance;el('speed').oninput=()=>el('speedLabel').textContent=Number(el('speed').value).toFixed(2)+'×';
-</script></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Italian Year Trainer</title>
+  <style>
+:root {
+  color-scheme: dark;
+  --forest: #092c23;
+  --cream: #f5f8f4;
+  --muted: #b5cfc3;
+  --line: #d9f3e429;
+  --mint: #a8e4c3;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  font-family: system-ui, sans-serif;
+  color: var(--cream);
+  background: #071f19;
+  display: grid; place-items: center;
+  min-height: 100vh; min-height: 100svh; margin: 0; padding: 24px;
+  -webkit-font-smoothing: antialiased;
+}
+.trainer {
+  width: 100%; max-width: 480px; padding: 34px; text-align: center;
+  background: #103b2e;
+  border: 1px solid var(--line); border-radius: 28px;
+  box-shadow: 0 30px 90px #00140db3, inset 0 1px 0 #ffffff12;
+}
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 20px;
+  color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .19em; text-transform: uppercase; }
+.flag { width: 21px; height: 14px; border-radius: 3px;
+  background: linear-gradient(to right, #49b486 33.333%, #f7faf6 33.333% 66.667%, #e67b75 66.667%); }
+h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(29px, 7vw, 38px); letter-spacing: -.035em; line-height: 1.1; }
+.subtitle { color: var(--muted); font-size: 14px; margin: 12px 0 26px; line-height: 1.6; }
+.stats { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  font-size: 12px; font-weight: 650; color: var(--cream); border-block: 1px solid var(--line); padding: 14px 0; }
+#round { color: var(--muted); }
+button { font: 650 14px system-ui, sans-serif; cursor: pointer; border: 1px solid var(--line); border-radius: 12px;
+  background: #ffffff09; color: var(--cream); padding: 13px 15px;
+  transition: background .18s, border-color .18s, transform .18s, box-shadow .18s; }
+button:not(:disabled):hover { background: #ffffff16; border-color: #ffffff55; }
+button:not(:disabled):active { transform: translateY(1px); }
+button:disabled { opacity: .48; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--mint); outline-offset: 4px; }
+.play, #reveal { display: flex; justify-content: center; align-items: center; width: 100%; }
+.play, #check { background: var(--cream); color: var(--forest); border-color: var(--cream); }
+.play { gap: 11px; border-color: #fff; padding: 18px;
+  font-size: 16px; margin: 25px 0 23px; box-shadow: 0 6px 18px #00160e44; }
+.play:not(:disabled):hover, #check:not(:disabled):hover { background: #dff3e7; border-color: #fff; }
+.play svg, #reveal svg { width: 19px; height: 19px; flex: none; fill: none; stroke: currentColor;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.field-label { display: block; text-align: left; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; margin: 0 0 9px 2px; }
+#guess { color: var(--cream); background: #061e17a8; width: 100%; padding: 18px 12px;
+  border: 1px solid #c4e8d335; border-radius: 14px; font: 500 38px/1.15 system-ui, sans-serif;
+  text-align: center; letter-spacing: .16em; font-variant-numeric: tabular-nums; appearance: textfield; }
+#guess::placeholder { color: #9eb9ac; opacity: .72; font-size: 29px; }
+#guess:focus { border-color: var(--mint); }
+input::-webkit-inner-spin-button, input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.actions { display: flex; gap: 10px; margin-top: 12px; }
+.actions button { flex: 1; }
+#next { flex: .8; }
+#feedback { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px;
+  min-height: 53px; margin-top: 15px; padding: 12px; font-size: 13px; line-height: 1.5; color: var(--muted);
+  border-radius: 12px; border: 1px solid transparent; }
+#guess.correct, #feedback.correct { background: #1e68402b; }
+#feedback.correct { color: #c1f4d6; border-color: #76d39e55; }
+#guess.wrong, #feedback.wrong { background: #a53b3224; }
+#feedback.wrong { color: #ffd1cc; border-color: #f2a59b44; }
+#feedback.revealed { color: var(--cream); background: #b7e5cc10; border-color: #c2e9d345; }
+#feedback.revealed strong { font-size: 30px; letter-spacing: .08em; font-weight: 700; }
+#feedback.revealed small { font-size: 12px; color: var(--muted); }
+#guess.correct { border-color: #83d5a4; }
+#guess.wrong { border-color: #efa199; }
+#reveal { gap: 9px;
+  margin-top: 9px; color: var(--mint); border-style: dashed; background: transparent; }
+.speed { display: flex; flex-direction: column; gap: 12px; text-align: left;
+  font-size: 12px; color: var(--muted); margin-top: 23px; padding-top: 20px; border-top: 1px solid var(--line); }
+.speed-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.speed-header label { font-weight: 650; font-size: 13px; color: var(--cream); }
+input[type=range] { display: block; width: 100%; margin: 0; accent-color: var(--cream); cursor: pointer; }
+#speedLabel { color: var(--cream); min-width: 50px; text-align: center; font-variant-numeric: tabular-nums; background: #ffffff0d; border: 1px solid var(--line); border-radius: 7px; padding: 5px 8px; }
+.speed-scale { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: -4px; }
+.speed-scale button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 3px; font-size: 12px; background: transparent; border: 1px solid transparent; text-align: center; }
+.speed-scale button[aria-pressed=true] { color: var(--forest); background: var(--cream); border-color: var(--cream); }
+.speed-scale button[aria-pressed=true]:hover { background: #dff3e7; }
+.speed-scale small { font-size: 10px; font-weight: 500; color: inherit; opacity: .8; font-variant-numeric: tabular-nums; }
+@media (max-width: 420px) { body { padding: 14px; } .trainer { padding: 24px 20px; border-radius: 22px; } }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } }
+  </style>
+</head>
+<body>
+  <main class="trainer">
+    <div class="eyebrow"><span class="flag" aria-hidden="true"></span> Italian listening practice</div>
+    <h2>Ascolta e scrivi</h2>
+    <div class="subtitle">Listen and identify the year · 1900–2026</div>
+    <div class="stats"><span id="round">Question 1</span><span id="score">Correct: 0 / 0</span></div>
+    <button class="play" id="play">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z M16 9a4 4 0 0 1 0 6m3-9a8 8 0 0 1 0 12"/></svg>
+      Listen to number
+    </button>
+    <form id="answerForm">
+      <label class="field-label" for="guess">Your answer</label>
+      <input id="guess" type="number" placeholder="YYYY" inputmode="numeric" autocomplete="off" aria-label="Enter the year">
+      <div class="actions">
+        <button id="check">Check answer</button>
+        <button type="button" id="next">Skip</button>
+      </div>
+    </form>
+    <div id="feedback" aria-live="polite">Press listen to begin.</div>
+    <button id="reveal" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>
+      Reveal expected answer
+    </button>
+    <div class="speed">
+      <div class="speed-header"><label for="speed">Speech speed</label><output id="speedLabel" for="speed">0.85×</output></div>
+      <input id="speed" type="range" min="0.25" max="1.25" step="0.05" value="0.85">
+      <div class="speed-scale" lang="it" role="group" aria-label="Velocità della voce">
+        <button data-speed="0.25">Più lento<small>0.25×</small></button>
+        <button data-speed="1">Normale<small>1.00×</small></button>
+        <button data-speed="1.25">Più veloce<small>1.25×</small></button>
+      </div>
+    </div>
+  </main>
+  <script>
+const $ = id => document.getElementById(id);
+const guess = $('guess'), check = $('check'), next = $('next'),
+      reveal = $('reveal'), feedback = $('feedback'), speed = $('speed');
+const presets = document.querySelectorAll('[data-speed]');
+const MIN_YEAR = 1900, MAX_YEAR = 2026;
+const randomYear = () => MIN_YEAR + Math.floor(Math.random() * (MAX_YEAR - MIN_YEAR + 1));
+let year = randomYear(), round = 1, correct = 0, total = 0;
+let finished = false, missed = false;
+
+function message(text, state = '') {
+  feedback.className = state;
+  feedback.textContent = text;
+}
+
+function finish() {
+  total++;
+  finished = guess.disabled = check.disabled = reveal.hidden = true;
+  $('score').textContent = `Correct: ${correct} / ${total}`;
+  next.textContent = 'Next number';
+}
+
+function say() {
+  try {
+    const speech = window.speechSynthesis;
+    speech.cancel();
+    const utterance = new SpeechSynthesisUtterance(String(year));
+    utterance.lang = 'it-IT';
+    utterance.rate = Number(speed.value);
+    const voices = speech.getVoices();
+    const voice = voices.find(v => v.lang.toLowerCase() === 'it-it')
+               || voices.find(v => v.lang.toLowerCase().startsWith('it'));
+    if (voice) utterance.voice = voice;
+    utterance.onerror = ({ error }) => {
+      if (!finished && !['interrupted', 'canceled'].includes(error))
+        message('Audio unavailable. Check your browser’s Italian voice support.');
+    };
+    speech.speak(utterance);
+  } catch {
+    if (!finished) message('Speech playback is unavailable in this browser.');
+  }
+}
+
+$('play').onclick = say;
+$('answerForm').onsubmit = e => {
+  e.preventDefault();
+  if (finished || !guess.value) return;
+  if (Number(guess.value) === year) {
+    if (!missed) correct++;
+    finish();
+    guess.className = 'correct';
+    message(`✓ Corretto! ${year}`, 'correct');
+  } else {
+    missed = true;
+    reveal.hidden = false;
+    guess.className = 'wrong';
+    message('✗ Riprova! — Try again.', 'wrong');
+    guess.focus();
+  }
+};
+
+reveal.onclick = () => {
+  if (finished || !missed) return;
+  finish();
+  feedback.className = 'revealed';
+  feedback.innerHTML = `<span>Expected answer</span><strong>${year}</strong><small>Listen again or continue to the next number.</small>`;
+  next.focus();
+};
+
+next.onclick = () => {
+  if (!finished) finish();
+  const previous = year;
+  do { year = randomYear(); } while (year === previous && MAX_YEAR > MIN_YEAR);
+  $('round').textContent = `Question ${++round}`;
+  finished = missed = guess.disabled = check.disabled = false;
+  reveal.hidden = true;
+  guess.value = guess.className = '';
+  next.textContent = 'Skip';
+  message('Listen and enter the year.');
+  say();
+};
+
+guess.oninput = () => guess.className = '';
+function updateSpeed() {
+  const rate = Number(speed.value).toFixed(2);
+  $('speedLabel').textContent = `${rate}×`;
+  speed.setAttribute('aria-valuetext', `${rate} times normal speed`);
+  presets.forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.speed) === Number(rate)));
+}
+speed.oninput = updateSpeed;
+presets.forEach(b => b.onclick = () => {
+  speed.value = b.dataset.speed;
+  updateSpeed();
+});
+updateSpeed();
+  </script>
+</body>
+</html>
